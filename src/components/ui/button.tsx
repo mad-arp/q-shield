@@ -5,7 +5,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 font-mono tracking-wide",
   {
     variants: {
       variant: {
@@ -15,11 +15,17 @@ const buttonVariants = cva(
         secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
+        // Q-SHIELD custom variants
+        cyber: "bg-primary/20 text-primary border-2 border-primary hover:bg-primary hover:text-primary-foreground transition-all duration-300 shadow-[0_0_20px_hsl(120_100%_50%/0.3)] hover:shadow-[0_0_30px_hsl(120_100%_50%/0.5)]",
+        scan: "bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_0_30px_hsl(120_100%_50%/0.4)] hover:shadow-[0_0_50px_hsl(120_100%_50%/0.6)] transition-all duration-300",
+        danger: "bg-destructive/20 text-destructive border-2 border-destructive hover:bg-destructive hover:text-destructive-foreground transition-all duration-300 shadow-[0_0_20px_hsl(0_100%_50%/0.3)]",
+        safe: "bg-safe text-safe-foreground hover:bg-safe/90 shadow-[0_0_20px_hsl(120_100%_50%/0.4)]",
       },
       size: {
         default: "h-10 px-4 py-2",
         sm: "h-9 rounded-md px-3",
         lg: "h-11 rounded-md px-8",
+        xl: "h-14 rounded-lg px-10 text-lg",
         icon: "h-10 w-10",
       },
     },
