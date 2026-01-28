@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { QrCode, Shield, Activity, AlertTriangle, History, Settings, Zap } from 'lucide-react';
+import { QrCode, Shield, Activity, AlertTriangle, History, Zap } from 'lucide-react';
+import ThemeToggle from '@/components/ThemeToggle';
 import { Button } from '@/components/ui/button';
 import StatusIndicator from '@/components/StatusIndicator';
 import QRScanner from '@/components/QRScanner';
@@ -91,9 +92,7 @@ const Index = () => {
             </div>
           </div>
           
-          <Button variant="ghost" size="icon" className="text-muted-foreground">
-            <Settings className="w-5 h-5" />
-          </Button>
+          <ThemeToggle />
         </div>
       </motion.header>
       
