@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { QrCode, Shield, Activity, AlertTriangle, History, Zap } from 'lucide-react';
 import ThemeToggle from '@/components/ThemeToggle';
+import { useFeedback } from '@/hooks/useFeedback';
 import { Button } from '@/components/ui/button';
 import StatusIndicator from '@/components/StatusIndicator';
 import QRScanner from '@/components/QRScanner';
@@ -19,6 +20,7 @@ const Index = () => {
   const [currentUrl, setCurrentUrl] = useState<string | null>(null);
   const [analysisResult, setAnalysisResult] = useState<ThreatAnalysis | null>(null);
   const [stats, setStats] = useState(getScanStatistics());
+  const { feedback } = useFeedback();
   
   useEffect(() => {
     setStats(getScanStatistics());
@@ -48,6 +50,15 @@ const Index = () => {
     
     // Save to history
     saveScanToHistory(result);
+    
+    // Trigger feedback based on threat level
+    if (result.threatLevel === 'safe') {
+      feedback('safe');
+    } else if (result.threatLevel === 'malicious') {
+      feedback('threat');
+    } else {
+      feedback('warning');
+    }
     
     setIsAnalyzing(false);
     setAnalysisResult(result);

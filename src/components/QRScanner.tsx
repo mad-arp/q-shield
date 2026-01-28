@@ -3,6 +3,7 @@ import { Html5Qrcode } from 'html5-qrcode';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Camera, Scan } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useFeedback } from '@/hooks/useFeedback';
 
 interface QRScannerProps {
   isOpen: boolean;
@@ -14,6 +15,7 @@ const QRScanner = ({ isOpen, onClose, onScan }: QRScannerProps) => {
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const [isScanning, setIsScanning] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { feedback } = useFeedback();
 
   useEffect(() => {
     if (isOpen && !scannerRef.current) {
@@ -39,6 +41,7 @@ const QRScanner = ({ isOpen, onClose, onScan }: QRScannerProps) => {
         },
         (decodedText) => {
           // QR Code successfully scanned - INTERCEPT the URL
+          feedback('scan'); // Haptic + sound on successful scan
           onScan(decodedText);
           stopScanner();
           onClose();
