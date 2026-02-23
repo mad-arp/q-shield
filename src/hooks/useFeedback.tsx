@@ -1,4 +1,6 @@
 import { useCallback, useRef } from 'react';
+import { Haptics, ImpactStyle, NotificationType } from '@capacitor/haptics';
+import { isNativePlatform } from '@/lib/capacitor';
 
 type FeedbackType = 'scan' | 'safe' | 'threat' | 'warning' | 'click';
 
@@ -12,7 +14,7 @@ const getAudioContext = () => {
   return audioContext;
 };
 
-// Haptic patterns (in ms)
+// Haptic patterns (in ms) - web fallback
 const hapticPatterns: Record<FeedbackType, number | number[]> = {
   scan: 50,
   safe: [50, 50, 100],
@@ -33,10 +35,36 @@ const soundConfigs: Record<FeedbackType, { frequency: number; duration: number; 
 export const useFeedback = () => {
   const isEnabledRef = useRef(true);
 
-  const triggerHaptic = useCallback((type: FeedbackType) => {
+  const triggerHaptic = useCallback(async (type: FeedbackType) => {
     if (!isEnabledRef.current) return;
-    
-    // Check if vibration is supported
+
+    // Use native Capacitor Haptics when available
+    if (isNativePlatform()) {
+      try {
+        switch (type) {
+          case 'scan':
+            await Haptics.impact({ style: ImpactStyle.Medium });
+            break;
+          case 'safe':
+            await Haptics.notification({ type: NotificationType.Success });
+            break;
+          case 'threat':
+            await Haptics.notification({ type: NotificationType.Error });
+            break;
+          case 'warning':
+            await Haptics.notification({ type: NotificationType.Warning });
+            break;
+          case 'click':
+            await Haptics.impact({ style: ImpactStyle.Light });
+            break;
+        }
+      } catch (e) {
+        // Haptics not available
+      }
+      return;
+    }
+
+    // Web fallback using Vibration API
     if ('vibrate' in navigator) {
       try {
         navigator.vibrate(hapticPatterns[type]);
@@ -53,7 +81,6 @@ export const useFeedback = () => {
       const ctx = getAudioContext();
       const config = soundConfigs[type];
       
-      // Resume context if suspended (required after user interaction)
       if (ctx.state === 'suspended') {
         ctx.resume();
       }
@@ -67,7 +94,6 @@ export const useFeedback = () => {
       oscillator.type = config.type;
       oscillator.frequency.setValueAtTime(config.frequency, ctx.currentTime);
       
-      // Add frequency ramp for scan effect
       if (config.ramp === 'up') {
         oscillator.frequency.setValueAtTime(800, ctx.currentTime);
         oscillator.frequency.exponentialRampToValueAtTime(config.frequency, ctx.currentTime + config.duration);
@@ -75,7 +101,6 @@ export const useFeedback = () => {
         oscillator.frequency.exponentialRampToValueAtTime(config.frequency / 2, ctx.currentTime + config.duration);
       }
       
-      // Volume envelope
       gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
       gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + config.duration);
       
@@ -96,7 +121,6 @@ export const useFeedback = () => {
         ctx.resume();
       }
 
-      // Play alternating alarm tones
       const playTone = (freq: number, startTime: number, duration: number) => {
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
@@ -114,7 +138,6 @@ export const useFeedback = () => {
         osc.stop(startTime + duration);
       };
 
-      // Alarm pattern
       const now = ctx.currentTime;
       playTone(440, now, 0.15);
       playTone(330, now + 0.15, 0.15);
@@ -135,7 +158,6 @@ export const useFeedback = () => {
         ctx.resume();
       }
 
-      // Play ascending chime
       const playChime = (freq: number, startTime: number, duration: number) => {
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
@@ -154,9 +176,9 @@ export const useFeedback = () => {
       };
 
       const now = ctx.currentTime;
-      playChime(523.25, now, 0.15);        // C5
-      playChime(659.25, now + 0.1, 0.15);  // E5
-      playChime(783.99, now + 0.2, 0.25);  // G5
+      playChime(523.25, now, 0.15);
+      playChime(659.25, now + 0.1, 0.15);
+      playChime(783.99, now + 0.2, 0.25);
     } catch (e) {
       // Audio not available
     }
