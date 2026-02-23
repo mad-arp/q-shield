@@ -7,8 +7,10 @@ import { ThemeProvider } from "@/hooks/useTheme";
 import OfflineIndicator from "@/components/OfflineIndicator";
 import SplashScreen from "@/components/SplashScreen";
 import Index from "./pages/Index";
+import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import { useState, useEffect } from "react";
+import { getSettings } from "@/lib/settings";
 
 const queryClient = new QueryClient();
 
@@ -17,9 +19,9 @@ const App = () => {
   const [hasSeenSplash, setHasSeenSplash] = useState(false);
 
   useEffect(() => {
-    // Only show splash once per session
     const seen = sessionStorage.getItem('qshield_splash_seen');
-    if (seen) {
+    const settings = getSettings();
+    if (seen || !settings.splashEnabled) {
       setShowSplash(false);
       setHasSeenSplash(true);
     }
@@ -44,6 +46,7 @@ const App = () => {
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Index />} />
+              <Route path="/settings" element={<Settings />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

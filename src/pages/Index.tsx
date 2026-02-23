@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { QrCode, Shield, Activity, AlertTriangle, History, Zap } from 'lucide-react';
+import { QrCode, Shield, Activity, AlertTriangle, History, Zap, Settings } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import ThemeToggle from '@/components/ThemeToggle';
 import { useFeedback } from '@/hooks/useFeedback';
 import { Button } from '@/components/ui/button';
+import { sendThreatNotification } from '@/lib/notifications';
 import StatusIndicator from '@/components/StatusIndicator';
 import QRScanner from '@/components/QRScanner';
 import AnalyzingOverlay from '@/components/AnalyzingOverlay';
@@ -14,6 +16,7 @@ import { saveScanToHistory, getScanStatistics, ScanRecord } from '@/lib/scanHist
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const Index = () => {
+  const navigate = useNavigate();
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analyzeStage, setAnalyzeStage] = useState<'expanding' | 'analyzing' | 'checking'>('expanding');
@@ -60,6 +63,9 @@ const Index = () => {
       feedback('warning');
     }
     
+    // Send push notification
+    sendThreatNotification(result.originalUrl, result.threatLevel);
+    
     setIsAnalyzing(false);
     setAnalysisResult(result);
     setStats(getScanStatistics());
@@ -103,7 +109,17 @@ const Index = () => {
             </div>
           </div>
           
-          <ThemeToggle />
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate('/settings')}
+              className="text-muted-foreground hover:text-primary"
+            >
+              <Settings className="w-5 h-5" />
+            </Button>
+            <ThemeToggle />
+          </div>
         </div>
       </motion.header>
       
