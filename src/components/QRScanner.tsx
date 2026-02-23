@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { Html5Qrcode } from 'html5-qrcode';
+import { Camera as CameraPlugin } from '@capacitor/camera';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Camera, Scan } from 'lucide-react';
+import { X, Camera, Scan, ImagePlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useFeedback } from '@/hooks/useFeedback';
+import { isNativePlatform } from '@/lib/capacitor';
 
 interface QRScannerProps {
   isOpen: boolean;
@@ -30,6 +32,16 @@ const QRScanner = ({ isOpen, onClose, onScan }: QRScannerProps) => {
   const initializeScanner = async () => {
     try {
       setError(null);
+
+      // On native platforms, request camera permission via Capacitor first
+      if (isNativePlatform()) {
+        const permission = await CameraPlugin.requestPermissions({ permissions: ['camera'] });
+        if (permission.camera === 'denied') {
+          setError('Camera permission denied. Please enable it in your device settings.');
+          return;
+        }
+      }
+
       const scanner = new Html5Qrcode('qr-reader');
       scannerRef.current = scanner;
 
@@ -40,8 +52,7 @@ const QRScanner = ({ isOpen, onClose, onScan }: QRScannerProps) => {
           qrbox: { width: 250, height: 250 },
         },
         (decodedText) => {
-          // QR Code successfully scanned - INTERCEPT the URL
-          feedback('scan'); // Haptic + sound on successful scan
+          feedback('scan');
           onScan(decodedText);
           stopScanner();
           onClose();
@@ -55,6 +66,34 @@ const QRScanner = ({ isOpen, onClose, onScan }: QRScannerProps) => {
     } catch (err) {
       console.error('Error starting scanner:', err);
       setError('Camera access denied. Please allow camera permissions.');
+    }
+  };
+
+  const handleScanFromGallery = async () => {
+    try {
+      // Use Capacitor Camera to pick image from gallery
+      const image = await CameraPlugin.pickImages({ limit: 1 });
+      if (image.photos.length > 0) {
+        const photo = image.photos[0];
+        if (photo.webPath) {
+          const scanner = new Html5Qrcode('qr-reader-hidden');
+          try {
+            const blob = await fetch(photo.webPath).then(r => r.blob());
+            const file = new File([blob], 'qr-image.jpg', { type: blob.type });
+            const result = await scanner.scanFileV2(file, true);
+            feedback('scan');
+            onScan(result.decodedText);
+            onClose();
+          } catch {
+            setError('No QR code found in the selected image.');
+          } finally {
+            scanner.clear();
+          }
+        }
+      }
+    } catch (e) {
+      // User cancelled or error
+      console.error('Gallery scan error:', e);
     }
   };
 
@@ -116,13 +155,11 @@ const QRScanner = ({ isOpen, onClose, onScan }: QRScannerProps) => {
               {/* Scanning overlay */}
               {isScanning && (
                 <div className="absolute inset-0 pointer-events-none">
-                  {/* Corner brackets */}
                   <div className="absolute top-4 left-4 w-12 h-12 border-l-2 border-t-2 border-primary" />
                   <div className="absolute top-4 right-4 w-12 h-12 border-r-2 border-t-2 border-primary" />
                   <div className="absolute bottom-4 left-4 w-12 h-12 border-l-2 border-b-2 border-primary" />
                   <div className="absolute bottom-4 right-4 w-12 h-12 border-r-2 border-b-2 border-primary" />
                   
-                  {/* Scan line */}
                   <motion.div
                     className="absolute left-4 right-4 h-0.5 bg-primary shadow-[0_0_10px_hsl(120_100%_50%)]"
                     animate={{ top: ['15%', '85%'] }}
@@ -153,6 +190,28 @@ const QRScanner = ({ isOpen, onClose, onScan }: QRScannerProps) => {
                 </div>
               )}
             </motion.div>
+
+            {/* Scan from Gallery button (native only) */}
+            {isNativePlatform() && (
+              <motion.div
+                className="mt-6"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.6 }}
+              >
+                <Button
+                  variant="outline"
+                  onClick={handleScanFromGallery}
+                  className="border-primary/50 text-primary hover:bg-primary/10"
+                >
+                  <ImagePlus className="w-4 h-4 mr-2" />
+                  SCAN FROM GALLERY
+                </Button>
+              </motion.div>
+            )}
+
+            {/* Hidden element for file scanning */}
+            <div id="qr-reader-hidden" className="hidden" />
           </div>
         </motion.div>
       )}
