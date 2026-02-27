@@ -1,8 +1,9 @@
 import { motion } from 'framer-motion';
-import { History, Trash2, ExternalLink, Shield, ShieldX, ShieldAlert, Clock, Download, FileJson, FileText } from 'lucide-react';
+import { History, Trash2, ExternalLink, Shield, ShieldX, ShieldAlert, Clock, Download, FileJson, FileText, Search, Filter } from 'lucide-react';
 import { ScanRecord, getScanHistory, clearScanHistory, deleteScanRecord, exportHistoryAsCSV, exportHistoryAsJSON, downloadFile } from '@/lib/scanHistory';
 import { Button } from '@/components/ui/button';
-import { useState, useEffect } from 'react';
+import { Input } from '@/components/ui/input';
+import { useState, useEffect, useMemo } from 'react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,8 +15,12 @@ interface ScanHistoryProps {
   onSelectRecord: (record: ScanRecord) => void;
 }
 
+type ThreatFilter = 'all' | 'safe' | 'suspicious' | 'malicious';
+
 const ScanHistory = ({ onSelectRecord }: ScanHistoryProps) => {
   const [history, setHistory] = useState<ScanRecord[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [threatFilter, setThreatFilter] = useState<ThreatFilter>('all');
   
   useEffect(() => {
     loadHistory();
@@ -24,6 +29,16 @@ const ScanHistory = ({ onSelectRecord }: ScanHistoryProps) => {
   const loadHistory = () => {
     setHistory(getScanHistory());
   };
+
+  const filteredHistory = useMemo(() => {
+    return history.filter(record => {
+      const matchesSearch = searchQuery === '' || 
+        record.url.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        record.result.domain.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesFilter = threatFilter === 'all' || record.result.threatLevel === threatFilter;
+      return matchesSearch && matchesFilter;
+    });
+  }, [history, searchQuery, threatFilter]);
   
   const handleClearHistory = () => {
     clearScanHistory();
@@ -69,6 +84,20 @@ const ScanHistory = ({ onSelectRecord }: ScanHistoryProps) => {
     if (hours < 24) return `${hours}h ago`;
     return `${days}d ago`;
   };
+
+  const filterLabels: Record<ThreatFilter, string> = {
+    all: 'ALL',
+    safe: 'SAFE',
+    suspicious: 'SUSPICIOUS',
+    malicious: 'MALICIOUS',
+  };
+
+  const filterColors: Record<ThreatFilter, string> = {
+    all: 'text-primary',
+    safe: 'text-safe',
+    suspicious: 'text-warning',
+    malicious: 'text-destructive',
+  };
   
   if (history.length === 0) {
     return (
@@ -95,7 +124,7 @@ const ScanHistory = ({ onSelectRecord }: ScanHistoryProps) => {
           <span className="font-display text-sm text-primary tracking-wide">
             SCAN HISTORY
           </span>
-          <span className="text-xs text-muted-foreground">({history.length})</span>
+          <span className="text-xs text-muted-foreground">({filteredHistory.length})</span>
         </div>
         
         <div className="flex items-center gap-1">
@@ -133,59 +162,106 @@ const ScanHistory = ({ onSelectRecord }: ScanHistoryProps) => {
           </Button>
         </div>
       </div>
+
+      {/* Search & Filter */}
+      <div className="flex gap-2">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            placeholder="Search by URL or domain..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9 bg-card border-border font-mono text-xs h-9"
+          />
+        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              className={`border-border font-mono text-xs h-9 ${filterColors[threatFilter]}`}
+            >
+              <Filter className="w-3 h-3 mr-1" />
+              {filterLabels[threatFilter]}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="bg-card border-border">
+            {(Object.keys(filterLabels) as ThreatFilter[]).map((key) => (
+              <DropdownMenuItem
+                key={key}
+                onClick={() => setThreatFilter(key)}
+                className={`cursor-pointer font-mono text-xs ${threatFilter === key ? 'bg-primary/20' : ''} ${filterColors[key]}`}
+              >
+                {filterLabels[key]}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
       
       {/* History list */}
       <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2">
-        {history.map((record, index) => (
+        {filteredHistory.length === 0 ? (
           <motion.div
-            key={record.id}
-            className="bg-card border border-border rounded-lg p-3 cursor-pointer hover:border-primary/50 transition-colors group"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: index * 0.05 }}
-            onClick={() => onSelectRecord(record)}
+            className="text-center py-8"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
           >
-            <div className="flex items-start gap-3">
-              {getThreatIcon(record.result.threatLevel)}
-              
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-mono text-foreground truncate">
-                  {record.result.domain}
-                </p>
-                <p className="text-xs text-muted-foreground truncate mt-0.5">
-                  {record.url}
-                </p>
-                <div className="flex items-center gap-2 mt-2">
-                  <span className={`text-xs px-2 py-0.5 rounded ${
-                    record.result.threatLevel === 'safe' 
-                      ? 'bg-safe/20 text-safe'
-                      : record.result.threatLevel === 'malicious'
-                      ? 'bg-destructive/20 text-destructive'
-                      : 'bg-warning/20 text-warning'
-                  }`}>
-                    {record.result.threatLevel.toUpperCase()}
-                  </span>
-                  <span className="text-xs text-muted-foreground flex items-center gap-1">
-                    <Clock className="w-3 h-3" />
-                    {formatTime(record.scannedAt)}
-                  </span>
+            <Search className="w-8 h-8 text-muted-foreground mx-auto mb-3 opacity-50" />
+            <p className="text-muted-foreground font-mono text-xs">NO MATCHING RESULTS</p>
+          </motion.div>
+        ) : (
+          filteredHistory.map((record, index) => (
+            <motion.div
+              key={record.id}
+              className="bg-card border border-border rounded-lg p-3 cursor-pointer hover:border-primary/50 transition-colors group"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: index * 0.05 }}
+              onClick={() => onSelectRecord(record)}
+            >
+              <div className="flex items-start gap-3">
+                {getThreatIcon(record.result.threatLevel)}
+                
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-mono text-foreground truncate">
+                    {record.result.domain}
+                  </p>
+                  <p className="text-xs text-muted-foreground truncate mt-0.5">
+                    {record.url}
+                  </p>
+                  <div className="flex items-center gap-2 mt-2">
+                    <span className={`text-xs px-2 py-0.5 rounded ${
+                      record.result.threatLevel === 'safe' 
+                        ? 'bg-safe/20 text-safe'
+                        : record.result.threatLevel === 'malicious'
+                        ? 'bg-destructive/20 text-destructive'
+                        : 'bg-warning/20 text-warning'
+                    }`}>
+                      {record.result.threatLevel.toUpperCase()}
+                    </span>
+                    <span className="text-xs text-muted-foreground flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      {formatTime(record.scannedAt)}
+                    </span>
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="w-8 h-8 text-muted-foreground hover:text-destructive"
+                    onClick={(e) => handleDeleteRecord(record.id, e)}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                  <ExternalLink className="w-4 h-4 text-muted-foreground" />
                 </div>
               </div>
-              
-              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="w-8 h-8 text-muted-foreground hover:text-destructive"
-                  onClick={(e) => handleDeleteRecord(record.id, e)}
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-                <ExternalLink className="w-4 h-4 text-muted-foreground" />
-              </div>
-            </div>
-          </motion.div>
-        ))}
+            </motion.div>
+          ))
+        )}
       </div>
     </div>
   );
