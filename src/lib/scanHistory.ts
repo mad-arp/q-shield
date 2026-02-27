@@ -85,3 +85,52 @@ export function getScanStatistics(): {
     blockedThreats: history.filter(r => r.result.threatLevel === 'malicious').length
   };
 }
+
+/**
+ * Export scan history as CSV
+ */
+export function exportHistoryAsCSV(): string {
+  const history = getScanHistory();
+  const headers = ['Date', 'URL', 'Domain', 'Threat Level', 'Threat Score', 'Threats'];
+  const rows = history.map(r => [
+    r.scannedAt.toISOString(),
+    `"${r.url.replace(/"/g, '""')}"`,
+    r.result.domain,
+    r.result.threatLevel,
+    r.result.threatScore.toString(),
+    `"${(r.result.threats || []).join('; ').replace(/"/g, '""')}"`
+  ]);
+  return [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+}
+
+/**
+ * Export scan history as JSON
+ */
+export function exportHistoryAsJSON(): string {
+  const history = getScanHistory();
+  const data = history.map(r => ({
+    date: r.scannedAt.toISOString(),
+    url: r.url,
+    domain: r.result.domain,
+    threatLevel: r.result.threatLevel,
+    threatScore: r.result.threatScore,
+    threats: r.result.threats || [],
+    expandedUrl: r.result.expandedUrl || null,
+  }));
+  return JSON.stringify({ exportDate: new Date().toISOString(), scans: data }, null, 2);
+}
+
+/**
+ * Download data as a file
+ */
+export function downloadFile(content: string, filename: string, mimeType: string): void {
+  const blob = new Blob([content], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}

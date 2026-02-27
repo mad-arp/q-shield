@@ -1,8 +1,14 @@
 import { motion } from 'framer-motion';
-import { History, Trash2, ExternalLink, Shield, ShieldX, ShieldAlert, Clock } from 'lucide-react';
-import { ScanRecord, getScanHistory, clearScanHistory, deleteScanRecord } from '@/lib/scanHistory';
+import { History, Trash2, ExternalLink, Shield, ShieldX, ShieldAlert, Clock, Download, FileJson, FileText } from 'lucide-react';
+import { ScanRecord, getScanHistory, clearScanHistory, deleteScanRecord, exportHistoryAsCSV, exportHistoryAsJSON, downloadFile } from '@/lib/scanHistory';
 import { Button } from '@/components/ui/button';
 import { useState, useEffect } from 'react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface ScanHistoryProps {
   onSelectRecord: (record: ScanRecord) => void;
@@ -28,6 +34,16 @@ const ScanHistory = ({ onSelectRecord }: ScanHistoryProps) => {
     e.stopPropagation();
     deleteScanRecord(id);
     loadHistory();
+  };
+
+  const handleExportCSV = () => {
+    const csv = exportHistoryAsCSV();
+    downloadFile(csv, `qshield-scan-history-${Date.now()}.csv`, 'text/csv');
+  };
+
+  const handleExportJSON = () => {
+    const json = exportHistoryAsJSON();
+    downloadFile(json, `qshield-scan-history-${Date.now()}.json`, 'application/json');
   };
   
   const getThreatIcon = (level: string) => {
@@ -82,15 +98,40 @@ const ScanHistory = ({ onSelectRecord }: ScanHistoryProps) => {
           <span className="text-xs text-muted-foreground">({history.length})</span>
         </div>
         
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleClearHistory}
-          className="text-destructive hover:text-destructive hover:bg-destructive/10 text-xs"
-        >
-          <Trash2 className="w-3 h-3 mr-1" />
-          Clear All
-        </Button>
+        <div className="flex items-center gap-1">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-primary hover:text-primary hover:bg-primary/10 text-xs"
+              >
+                <Download className="w-3 h-3 mr-1" />
+                Export
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="bg-card border-border">
+              <DropdownMenuItem onClick={handleExportCSV} className="cursor-pointer font-mono text-xs">
+                <FileText className="w-4 h-4 mr-2" />
+                Export as CSV
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleExportJSON} className="cursor-pointer font-mono text-xs">
+                <FileJson className="w-4 h-4 mr-2" />
+                Export as JSON
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleClearHistory}
+            className="text-destructive hover:text-destructive hover:bg-destructive/10 text-xs"
+          >
+            <Trash2 className="w-3 h-3 mr-1" />
+            Clear All
+          </Button>
+        </div>
       </div>
       
       {/* History list */}
