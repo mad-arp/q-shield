@@ -199,6 +199,16 @@ const Index = () => {
               <ManualUrlEntry onSubmit={handleScan} isAnalyzing={isAnalyzing} />
             </motion.section>
             
+            {/* Scan Trend Chart */}
+            <motion.section
+              className="mb-8"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.55 }}
+            >
+              <ScanTrendChart refreshKey={stats.totalScans} />
+            </motion.section>
+
             {/* Stats grid */}
             <motion.section
               className="grid grid-cols-2 gap-4 mb-8"
