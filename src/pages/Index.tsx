@@ -13,7 +13,7 @@ import AnalysisResult from '@/components/AnalysisResult';
 import ScanHistory from '@/components/ScanHistory';
 import ScanFromFile from '@/components/ScanFromFile';
 import ManualUrlEntry from '@/components/ManualUrlEntry';
-import ScanTrendChart from '@/components/ScanTrendChart';
+
 import { analyzeThreat, ThreatAnalysis, isUrlShortened } from '@/lib/threatIntelligence';
 import { saveScanToHistory, getScanStatistics, ScanRecord } from '@/lib/scanHistory';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -199,15 +199,8 @@ const Index = () => {
               <ManualUrlEntry onSubmit={handleScan} isAnalyzing={isAnalyzing} />
             </motion.section>
             
-            {/* Scan Trend Chart */}
-            <motion.section
-              className="mb-8"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.55 }}
-            >
-              <ScanTrendChart refreshKey={stats.totalScans} />
-            </motion.section>
+
+
 
             {/* Stats grid */}
             <motion.section
