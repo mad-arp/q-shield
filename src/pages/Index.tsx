@@ -159,7 +159,7 @@ const Index = () => {
             
             {/* Scan button */}
             <motion.section 
-              className="text-center mb-12"
+              className="text-center mb-8"
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.4 }}
@@ -182,6 +182,21 @@ const Index = () => {
               <p className="text-muted-foreground text-sm mt-4 font-mono">
                 Intercept & analyze before opening
               </p>
+
+              {/* Upload QR from file */}
+              <div className="mt-4">
+                <ScanFromFile onScan={handleScan} />
+              </div>
+            </motion.section>
+
+            {/* Manual URL Entry */}
+            <motion.section
+              className="mb-8"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+            >
+              <ManualUrlEntry onSubmit={handleScan} isAnalyzing={isAnalyzing} />
             </motion.section>
             
             {/* Stats grid */}
