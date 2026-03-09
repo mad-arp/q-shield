@@ -13,7 +13,7 @@ import AnalysisResult from '@/components/AnalysisResult';
 import ScanHistory from '@/components/ScanHistory';
 import ScanFromFile from '@/components/ScanFromFile';
 import ManualUrlEntry from '@/components/ManualUrlEntry';
-import ScanTrendChart from '@/components/ScanTrendChart';
+
 import { analyzeThreat, ThreatAnalysis, isUrlShortened } from '@/lib/threatIntelligence';
 import { saveScanToHistory, getScanStatistics, ScanRecord } from '@/lib/scanHistory';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
