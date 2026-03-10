@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { QrCode, Shield, Activity, AlertTriangle, History, Zap, Settings } from 'lucide-react';
+import { QrCode, Shield, Activity, AlertTriangle, History, Zap, Settings, BarChart3 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import ThemeToggle from '@/components/ThemeToggle';
 import { useFeedback } from '@/hooks/useFeedback';
@@ -13,6 +13,7 @@ import AnalysisResult from '@/components/AnalysisResult';
 import ScanHistory from '@/components/ScanHistory';
 import ScanFromFile from '@/components/ScanFromFile';
 import ManualUrlEntry from '@/components/ManualUrlEntry';
+import ScanTrendChart from '@/components/ScanTrendChart';
 
 import { analyzeThreat, ThreatAnalysis, isUrlShortened } from '@/lib/threatIntelligence';
 import { saveScanToHistory, getScanStatistics, ScanRecord } from '@/lib/scanHistory';
@@ -36,10 +37,7 @@ const Index = () => {
     setCurrentUrl(url);
     setIsAnalyzing(true);
     
-    // Simulate progressive analysis stages
     setAnalyzeStage('expanding');
-    
-    // Check if URL is shortened to determine analysis flow
     const isShortened = isUrlShortened(url);
     
     if (isShortened) {
@@ -51,13 +49,9 @@ const Index = () => {
     
     setAnalyzeStage('checking');
     
-    // Perform actual threat analysis
     const result = await analyzeThreat(url);
-    
-    // Save to history
     saveScanToHistory(result);
     
-    // Trigger feedback based on threat level
     if (result.threatLevel === 'safe') {
       feedback('safe');
     } else if (result.threatLevel === 'malicious') {
@@ -66,7 +60,6 @@ const Index = () => {
       feedback('warning');
     }
     
-    // Send push notification
     sendThreatNotification(result.originalUrl, result.threatLevel);
     
     setIsAnalyzing(false);
@@ -129,19 +122,26 @@ const Index = () => {
       {/* Main content */}
       <main className="container px-4 py-8">
         <Tabs defaultValue="dashboard" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-8 bg-card border border-border">
+          <TabsList className="grid w-full grid-cols-3 mb-8 bg-card border border-border">
             <TabsTrigger 
               value="dashboard" 
-              className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary font-mono tracking-wide"
+              className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary font-mono tracking-wide text-xs sm:text-sm"
             >
-              <Activity className="w-4 h-4 mr-2" />
+              <Activity className="w-4 h-4 mr-1 sm:mr-2" />
               DASHBOARD
             </TabsTrigger>
             <TabsTrigger 
-              value="history"
-              className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary font-mono tracking-wide"
+              value="analytics"
+              className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary font-mono tracking-wide text-xs sm:text-sm"
             >
-              <History className="w-4 h-4 mr-2" />
+              <BarChart3 className="w-4 h-4 mr-1 sm:mr-2" />
+              ANALYTICS
+            </TabsTrigger>
+            <TabsTrigger 
+              value="history"
+              className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary font-mono tracking-wide text-xs sm:text-sm"
+            >
+              <History className="w-4 h-4 mr-1 sm:mr-2" />
               HISTORY
             </TabsTrigger>
           </TabsList>
@@ -198,9 +198,6 @@ const Index = () => {
             >
               <ManualUrlEntry onSubmit={handleScan} isAnalyzing={isAnalyzing} />
             </motion.section>
-            
-
-
 
             {/* Stats grid */}
             <motion.section
@@ -271,6 +268,10 @@ const Index = () => {
                 </li>
               </ul>
             </motion.section>
+          </TabsContent>
+
+          <TabsContent value="analytics">
+            <ScanTrendChart />
           </TabsContent>
           
           <TabsContent value="history">
