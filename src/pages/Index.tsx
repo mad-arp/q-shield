@@ -69,7 +69,9 @@ const Index = () => {
   
   const handleOpenLink = () => {
     if (analysisResult) {
-      window.open(analysisResult.expandedUrl || analysisResult.originalUrl, '_blank');
+      const url = analysisResult.expandedUrl || analysisResult.originalUrl;
+      if (!url || !/^https?:\/\//i.test(url)) return;
+      window.open(url, '_blank', 'noopener,noreferrer');
     }
   };
   

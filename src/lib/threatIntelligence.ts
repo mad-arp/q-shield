@@ -112,6 +112,13 @@ function analyzeUrlPatterns(url: string): { threats: string[]; score: number } {
   const threats: string[] = [];
   let score = 0;
   
+  // Block dangerous URI schemes (javascript:, data:, vbscript:)
+  if (/^(javascript|data|vbscript):/i.test(url)) {
+    threats.push('Dangerous URI scheme detected');
+    score += 100;
+    return { threats, score: Math.min(score, 100) };
+  }
+
   try {
     const urlObj = new URL(url);
     const hostname = urlObj.hostname.toLowerCase();
