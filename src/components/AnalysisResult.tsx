@@ -1,10 +1,11 @@
 import { motion } from 'framer-motion';
-import { Shield, AlertTriangle, ExternalLink, X, ChevronRight, Clock, Link2, Globe } from 'lucide-react';
+import { Shield, AlertTriangle, ExternalLink, X, ChevronRight, Clock, Link2, Globe, CalendarClock, Radio } from 'lucide-react';
 import { ThreatAnalysis } from '@/lib/threatIntelligence';
-import { runHeuristicAnalysis } from '@/lib/heuristicAnalysis';
+import { runHeuristicAnalysis, HeuristicFlag } from '@/lib/heuristicAnalysis';
 import { Button } from '@/components/ui/button';
 import ThreatBreakdown from '@/components/ThreatBreakdown';
 import ExportAnalysis from '@/components/ExportAnalysis';
+import SafePreview from '@/components/SafePreview';
 import { useMemo } from 'react';
 
 interface AnalysisResultProps {
@@ -17,10 +18,13 @@ const AnalysisResult = ({ result, onClose, onOpenLink }: AnalysisResultProps) =>
   const isSafe = result.threatLevel === 'safe';
   const isMalicious = result.threatLevel === 'malicious';
 
-  const heuristics = useMemo(
-    () => runHeuristicAnalysis(result.originalUrl, result.expandedUrl),
-    [result.originalUrl, result.expandedUrl]
-  );
+  const heuristics = useMemo(() => {
+    const local = runHeuristicAnalysis(result.originalUrl, result.expandedUrl);
+    const backend = (result.backendFindings ?? []) as HeuristicFlag[];
+    const merged = [...backend, ...local.filter((f) => f.id !== 'clean')];
+    const unique = merged.filter((f, i) => merged.findIndex((m) => m.id === f.id) === i);
+    return unique.length > 0 ? unique : local;
+  }, [result.originalUrl, result.expandedUrl, result.backendFindings]);
 
   return (
     <motion.div

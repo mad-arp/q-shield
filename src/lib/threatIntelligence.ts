@@ -42,6 +42,18 @@ export interface ThreatAnalysis {
   domain: string;
   isShortened: boolean;
   scanDuration: number;
+  /** Findings returned by the secure backend (payload, domain age, reputation) */
+  backendFindings?: Array<{
+    id: string;
+    label: string;
+    description: string;
+    severity: 'high' | 'warning' | 'clean';
+    category: string;
+  }>;
+  /** WHOIS/RDAP domain registration data */
+  domainAge?: { available: boolean; registeredAt: string | null; ageDays: number | null };
+  /** Whether external threat intel was live or the offline fallback was used */
+  intelMode?: 'live' | 'offline-fallback';
 }
 
 /**
