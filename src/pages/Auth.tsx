@@ -39,7 +39,7 @@ const Auth = () => {
       });
       return null;
     }
-    return parsed.data;
+    return { email: parsed.data.email, password: parsed.data.password };
   };
 
   const handleSignIn = async (e: React.FormEvent) => {
